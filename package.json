@@ -1,0 +1,26 @@
+{
+  "name": "setup-rpk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "GitHub Action to install the Redpanda rpk CLI",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "package": "ncc build src/main.ts -o dist --source-map --license licenses.txt",
+    "build": "npm run typecheck && npm run package"
+  },
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/http-client": "^4.0.1",
+    "@actions/tool-cache": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "@vercel/ncc": "^0.45.0",
+    "typescript": "^5.9.3"
+  }
+}

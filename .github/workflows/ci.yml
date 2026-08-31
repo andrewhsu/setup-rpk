@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: npm ci
+      - run: npm run build
+      - name: Verify dist/ is up to date
+        run: |
+          if ! git diff --quiet -- dist/; then
+            git diff --stat -- dist/
+            echo "::error::dist/ is out of date; run 'npm run build' and commit the result"
+            exit 1
+          fi
+
+  smoke-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        version: [latest, v26.2.1]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup rpk
+        id: setup
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+
+      - name: Check rpk works
+        run: |
+          rpk version
+          rpk ai version
+
+      - name: Check outputs
+        env:
+          RPK_VERSION: ${{ steps.setup.outputs.rpk-version }}
+          RPK_PATH: ${{ steps.setup.outputs.rpk-path }}
+        run: |
+          test -n "$RPK_VERSION"
+          test -x "$RPK_PATH"
+
+      - name: Check pinned version
+        if: matrix.version != 'latest'
+        env:
+          RPK_VERSION: ${{ steps.setup.outputs.rpk-version }}
+        run: |
+          test "$RPK_VERSION" = "26.2.1"
+          rpk version | grep -F "26.2.1"
+
+      - name: Setup rpk again (tool cache)
+        id: setup2
+        uses: ./
+        with:
+          version: ${{ steps.setup.outputs.rpk-version }}
+
+      - name: Check cache hit
+        env:
+          CACHE_HIT: ${{ steps.setup2.outputs.cache-hit }}
+        run: test "$CACHE_HIT" = "true"

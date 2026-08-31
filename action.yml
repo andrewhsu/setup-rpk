@@ -1,0 +1,33 @@
+name: Setup rpk
+description: Install the Redpanda rpk CLI on Linux and macOS GitHub Actions runners
+author: Redpanda Data
+branding:
+  icon: download
+  color: red
+
+inputs:
+  version:
+    description: >-
+      Version of rpk to install, e.g. "26.2.1" or "v26.2.1".
+      Use "latest" (default) to install the most recent release.
+    required: false
+    default: latest
+  github-token:
+    description: >-
+      GitHub token used to query the redpanda-data/redpanda releases API when
+      resolving "latest". Defaults to the workflow token to avoid API rate
+      limits.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  rpk-version:
+    description: The concrete rpk version that was installed (no leading "v"), e.g. "26.2.2"
+  rpk-path:
+    description: Absolute path to the installed rpk binary
+  cache-hit:
+    description: '"true" if rpk was served from the runner tool cache, "false" otherwise'
+
+runs:
+  using: node24
+  main: dist/index.js
